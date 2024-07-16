@@ -12,44 +12,23 @@ use solana_program::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Counter {
+pub struct Pool {
     pub key: Key,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
+    pub collection: Pubkey,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
     pub authority: Pubkey,
-    pub value: u32,
+    pub shares_per_token: u64,
+    pub pool_nfts: Vec<(Pubkey, Pubkey)>,
 }
 
-impl Counter {
-    pub const LEN: usize = 37;
-
-    /// Prefix values used to generate a PDA for this account.
-    ///
-    /// Values are positional and appear in the following order:
-    ///
-    ///   0. `Counter::PREFIX`
-    ///   1. authority (`Pubkey`)
-    pub const PREFIX: &'static [u8] = "counter".as_bytes();
-
-    pub fn create_pda(
-        authority: Pubkey,
-        bump: u8,
-    ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
-        solana_program::pubkey::Pubkey::create_program_address(
-            &["counter".as_bytes(), authority.as_ref(), &[bump]],
-            &crate::SHARE_POOL_ID,
-        )
-    }
-
-    pub fn find_pda(authority: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
-        solana_program::pubkey::Pubkey::find_program_address(
-            &["counter".as_bytes(), authority.as_ref()],
-            &crate::SHARE_POOL_ID,
-        )
-    }
-
+impl Pool {
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
         let mut data = data;
@@ -57,7 +36,7 @@ impl Counter {
     }
 }
 
-impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Counter {
+impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Pool {
     type Error = std::io::Error;
 
     fn try_from(
@@ -69,26 +48,26 @@ impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Counter {
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountDeserialize for Counter {
+impl anchor_lang::AccountDeserialize for Pool {
     fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
         Ok(Self::deserialize(buf)?)
     }
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountSerialize for Counter {}
+impl anchor_lang::AccountSerialize for Pool {}
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::Owner for Counter {
+impl anchor_lang::Owner for Pool {
     fn owner() -> Pubkey {
         crate::SHARE_POOL_ID
     }
 }
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::IdlBuild for Counter {}
+impl anchor_lang::IdlBuild for Pool {}
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::Discriminator for Counter {
+impl anchor_lang::Discriminator for Pool {
     const DISCRIMINATOR: [u8; 8] = [0; 8];
 }

@@ -17,7 +17,7 @@ import {
 
 export enum Key {
   Uninitialized,
-  Counter,
+  Pool,
 }
 
 export type KeyArgs = Key;

@@ -3,14 +3,22 @@
   "name": "depioneer_share_pool",
   "instructions": [
     {
-      "name": "Create",
+      "name": "CreatePool",
       "accounts": [
         {
-          "name": "counter",
+          "name": "pool",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "The program derived address of the counter account to create (seeds: ['counter', authority])"
+            "Pool account to create (seeds: ['pool', collection_nft])"
+          ]
+        },
+        {
+          "name": "collectionNft",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Collection NFT Metadata account"
           ]
         },
         {
@@ -18,7 +26,7 @@
           "isMut": false,
           "isSigner": true,
           "docs": [
-            "The authority of the counter"
+            "Authority account"
           ]
         },
         {
@@ -26,7 +34,7 @@
           "isMut": true,
           "isSigner": true,
           "docs": [
-            "The account paying for the storage fees"
+            "Payer account"
           ]
         },
         {
@@ -34,53 +42,27 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "The system program"
-          ]
-        }
-      ],
-      "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 0
-      }
-    },
-    {
-      "name": "Increment",
-      "accounts": [
-        {
-          "name": "counter",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "The program derived address of the counter account to increment (seeds: ['counter', authority])"
-          ]
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "The authority of the counter"
+            "System program account"
           ]
         }
       ],
       "args": [
         {
-          "name": "amount",
+          "name": "args",
           "type": {
-            "option": "u32"
+            "defined": "CreatePoolArgs"
           }
         }
       ],
       "discriminant": {
         "type": "u8",
-        "value": 1
+        "value": 0
       }
     }
   ],
   "accounts": [
     {
-      "name": "Counter",
+      "name": "Pool",
       "type": {
         "kind": "struct",
         "fields": [
@@ -91,18 +73,45 @@
             }
           },
           {
+            "name": "collection",
+            "type": "publicKey"
+          },
+          {
             "name": "authority",
             "type": "publicKey"
           },
           {
-            "name": "value",
-            "type": "u32"
+            "name": "sharesPerToken",
+            "type": "u64"
+          },
+          {
+            "name": "poolNfts",
+            "type": {
+              "vec": {
+                "tuple": [
+                  "publicKey",
+                  "publicKey"
+                ]
+              }
+            }
           }
         ]
       }
     }
   ],
   "types": [
+    {
+      "name": "CreatePoolArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sharesPerToken",
+            "type": "u64"
+          }
+        ]
+      }
+    },
     {
       "name": "Key",
       "type": {
@@ -112,7 +121,7 @@
             "name": "Uninitialized"
           },
           {
-            "name": "Counter"
+            "name": "Pool"
           }
         ]
       }
@@ -173,6 +182,16 @@
       "code": 10,
       "name": "NumericalOverflow",
       "msg": "Numerical overflow"
+    },
+    {
+      "code": 11,
+      "name": "InvalidSpaceArgs",
+      "msg": "Invalid space args"
+    },
+    {
+      "code": 12,
+      "name": "InvalidSeedArgs",
+      "msg": "Invalid seed args"
     }
   ],
   "metadata": {

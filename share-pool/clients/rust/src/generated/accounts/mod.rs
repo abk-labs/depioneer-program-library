@@ -5,6 +5,6 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
-pub(crate) mod r#counter;
+pub(crate) mod r#pool;
 
-pub use self::r#counter::*;
+pub use self::r#pool::*;

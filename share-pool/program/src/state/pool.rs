@@ -39,7 +39,7 @@ impl SharePoolAccount for Pool {
             space += 4 + (pool_nfts * (32 + 32)); // pool_nfts
             return Ok(space);
         }
-        Err(SharePoolError::InvalidSpaceArgs.into())
+        Err(SharePoolError::InvalidSpaceArgs)
     }
 
     fn seeds(args: SharePoolAccountPdaArgs) -> Result<Vec<&[u8]>, SharePoolError> {
@@ -55,6 +55,6 @@ impl SharePoolAccount for Pool {
                 authority.as_ref(),
             ]);
         }
-        Err(SharePoolError::InvalidSeedArgs.into())
+        Err(SharePoolError::InvalidSeedArgs)
     }
 }

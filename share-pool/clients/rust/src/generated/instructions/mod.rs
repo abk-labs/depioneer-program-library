@@ -5,8 +5,6 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
-pub(crate) mod r#create;
-pub(crate) mod r#increment;
+pub(crate) mod r#create_pool;
 
-pub use self::r#create::*;
-pub use self::r#increment::*;
+pub use self::r#create_pool::*;

@@ -7,34 +7,17 @@
  */
 
 import { containsBytes, getU8Encoder, type Address } from '@solana/web3.js';
-import {
-  type ParsedCreateInstruction,
-  type ParsedIncrementInstruction,
-} from '../instructions';
-import { Key, getKeyEncoder } from '../types';
+import { type ParsedCreatePoolInstruction } from '../instructions';
 
 export const SHARE_POOL_PROGRAM_ADDRESS =
   'AGFRndPmfcdYfPf1rqbkuY6Ku18UHUVnLoz2JEuC768r' as Address<'AGFRndPmfcdYfPf1rqbkuY6Ku18UHUVnLoz2JEuC768r'>;
 
 export enum SharePoolAccount {
-  Counter,
-}
-
-export function identifySharePoolAccount(
-  account: { data: Uint8Array } | Uint8Array
-): SharePoolAccount {
-  const data = account instanceof Uint8Array ? account : account.data;
-  if (containsBytes(data, getKeyEncoder().encode(Key.Counter), 0)) {
-    return SharePoolAccount.Counter;
-  }
-  throw new Error(
-    'The provided account could not be identified as a sharePool account.'
-  );
+  Pool,
 }
 
 export enum SharePoolInstruction {
-  Create,
-  Increment,
+  CreatePool,
 }
 
 export function identifySharePoolInstruction(
@@ -43,10 +26,7 @@ export function identifySharePoolInstruction(
   const data =
     instruction instanceof Uint8Array ? instruction : instruction.data;
   if (containsBytes(data, getU8Encoder().encode(0), 0)) {
-    return SharePoolInstruction.Create;
-  }
-  if (containsBytes(data, getU8Encoder().encode(1), 0)) {
-    return SharePoolInstruction.Increment;
+    return SharePoolInstruction.CreatePool;
   }
   throw new Error(
     'The provided instruction could not be identified as a sharePool instruction.'
@@ -55,10 +35,6 @@ export function identifySharePoolInstruction(
 
 export type ParsedSharePoolInstruction<
   TProgram extends string = 'AGFRndPmfcdYfPf1rqbkuY6Ku18UHUVnLoz2JEuC768r',
-> =
-  | ({
-      instructionType: SharePoolInstruction.Create;
-    } & ParsedCreateInstruction<TProgram>)
-  | ({
-      instructionType: SharePoolInstruction.Increment;
-    } & ParsedIncrementInstruction<TProgram>);
+> = {
+  instructionType: SharePoolInstruction.CreatePool;
+} & ParsedCreatePoolInstruction<TProgram>;

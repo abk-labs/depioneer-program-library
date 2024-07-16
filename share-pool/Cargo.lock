@@ -1079,7 +1079,8 @@ name = "depioneer-share-pool"
 version = "0.0.0"
 dependencies = [
  "borsh 0.10.3",
- "num-derive 0.3.3",
+ "mpl-token-metadata",
+ "num-derive 0.4.2",
  "num-traits",
  "shank",
  "solana-program",
@@ -1092,7 +1093,7 @@ version = "0.0.0"
 dependencies = [
  "assert_matches",
  "borsh 0.10.3",
- "num-derive 0.3.3",
+ "num-derive 0.4.2",
  "num-traits",
  "serde",
  "serde_with 3.9.0",
@@ -2233,6 +2234,19 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "mpl-token-metadata"
+version = "4.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "caf0f61b553e424a6234af1268456972ee66c2222e1da89079242251fa7479e5"
+dependencies = [
+ "borsh 0.10.3",
+ "num-derive 0.3.3",
+ "num-traits",
+ "solana-program",
+ "thiserror",
 ]
 
 [[package]]

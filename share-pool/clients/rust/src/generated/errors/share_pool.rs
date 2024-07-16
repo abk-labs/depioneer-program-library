@@ -43,6 +43,12 @@ pub enum SharePoolError {
     /// 10 - Numerical overflow
     #[error("Numerical overflow")]
     NumericalOverflow = 0xA,
+    /// 11 - Invalid space args
+    #[error("Invalid space args")]
+    InvalidSpaceArgs = 0xB,
+    /// 12 - Invalid seed args
+    #[error("Invalid seed args")]
+    InvalidSeedArgs = 0xC,
 }
 
 impl solana_program::program_error::PrintProgramError for SharePoolError {

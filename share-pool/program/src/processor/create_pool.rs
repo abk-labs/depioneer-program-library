@@ -1,8 +1,10 @@
-use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult};
+use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, system_program};
 
 use crate::{
-    assertions::{assert_pda, assert_same_pubkeys, assert_signer, assert_writable},
-    error::SharePoolError,
+    assertions::{
+        assert_empty, assert_pda, assert_program_owner, assert_same_pubkeys, assert_signer,
+        assert_writable,
+    },
     instruction::{accounts::CreatePoolAccounts, create_pool::CreatePoolArgs},
     state::{Pool, SharePoolAccount, SharePoolAccountPdaArgs, SharePoolAccountSpaceArgs},
     utils::create_account,
@@ -14,22 +16,25 @@ pub fn create_pool<'a>(accounts: &'a [AccountInfo<'a>], args: CreatePoolArgs) ->
 
     // Guards.
     let pool_seeds = Pool::seeds(SharePoolAccountPdaArgs::Pool {
-        collection: &ctx.accounts.pool.key,
-        authority: &ctx.accounts.authority.key,
+        collection: ctx.accounts.pool.key,
+        authority: ctx.accounts.authority.key,
     })?;
     let pool_bump = assert_pda("pool", ctx.accounts.pool, &crate::ID, &pool_seeds)?;
-    // TODO: Assert program owner for collection_nft.
+    
+    assert_empty("pool", ctx.accounts.pool)?;
+    assert_program_owner(
+        "collection_nft",
+        ctx.accounts.collection_nft,
+        &mpl_token_metadata::ID,
+    )?;
     assert_signer("authority", ctx.accounts.authority)?;
     assert_signer("payer", ctx.accounts.payer)?;
     assert_writable("payer", ctx.accounts.payer)?;
     assert_same_pubkeys(
         "system_program",
         ctx.accounts.system_program,
-        &solana_program::system_program::ID,
+        &system_program::ID,
     )?;
-    if !ctx.accounts.pool.data_is_empty() {
-        return Err(SharePoolError::ExpectedEmptyAccount.into());
-    }
 
     let mut pool_seeds = pool_seeds;
     let pool_bump_seed = [pool_bump];

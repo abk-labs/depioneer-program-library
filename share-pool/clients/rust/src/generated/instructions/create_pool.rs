@@ -9,37 +9,53 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct Increment {
-    /// The program derived address of the counter account to increment (seeds: ['counter', authority])
-    pub counter: solana_program::pubkey::Pubkey,
-    /// The authority of the counter
+pub struct CreatePool {
+    /// Pool account to create (seeds: ['pool', collection_nft])
+    pub pool: solana_program::pubkey::Pubkey,
+    /// Collection NFT Metadata account
+    pub collection_nft: solana_program::pubkey::Pubkey,
+    /// Authority account
     pub authority: solana_program::pubkey::Pubkey,
+    /// Payer account
+    pub payer: solana_program::pubkey::Pubkey,
+    /// System program account
+    pub system_program: solana_program::pubkey::Pubkey,
 }
 
-impl Increment {
+impl CreatePool {
     pub fn instruction(
         &self,
-        args: IncrementInstructionArgs,
+        args: CreatePoolInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: IncrementInstructionArgs,
+        args: CreatePoolInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.counter,
+            self.pool, false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.collection_nft,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.authority,
             true,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.payer, true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.system_program,
+            false,
+        ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = IncrementInstructionData::new().try_to_vec().unwrap();
+        let mut data = CreatePoolInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -52,17 +68,17 @@ impl Increment {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct IncrementInstructionData {
+pub struct CreatePoolInstructionData {
     discriminator: u8,
 }
 
-impl IncrementInstructionData {
+impl CreatePoolInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 1 }
+        Self { discriminator: 0 }
     }
 }
 
-impl Default for IncrementInstructionData {
+impl Default for CreatePoolInstructionData {
     fn default() -> Self {
         Self::new()
     }
@@ -70,44 +86,68 @@ impl Default for IncrementInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct IncrementInstructionArgs {
-    pub amount: Option<u32>,
+pub struct CreatePoolInstructionArgs {
+    pub shares_per_token: u64,
 }
 
-/// Instruction builder for `Increment`.
+/// Instruction builder for `CreatePool`.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` counter
-///   1. `[signer]` authority
+///   0. `[writable]` pool
+///   1. `[]` collection_nft
+///   2. `[signer]` authority
+///   3. `[writable, signer]` payer
+///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
-pub struct IncrementBuilder {
-    counter: Option<solana_program::pubkey::Pubkey>,
+pub struct CreatePoolBuilder {
+    pool: Option<solana_program::pubkey::Pubkey>,
+    collection_nft: Option<solana_program::pubkey::Pubkey>,
     authority: Option<solana_program::pubkey::Pubkey>,
-    amount: Option<u32>,
+    payer: Option<solana_program::pubkey::Pubkey>,
+    system_program: Option<solana_program::pubkey::Pubkey>,
+    shares_per_token: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl IncrementBuilder {
+impl CreatePoolBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-    /// The program derived address of the counter account to increment (seeds: ['counter', authority])
+    /// Pool account to create (seeds: ['pool', collection_nft])
     #[inline(always)]
-    pub fn counter(&mut self, counter: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.counter = Some(counter);
+    pub fn pool(&mut self, pool: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.pool = Some(pool);
         self
     }
-    /// The authority of the counter
+    /// Collection NFT Metadata account
+    #[inline(always)]
+    pub fn collection_nft(&mut self, collection_nft: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.collection_nft = Some(collection_nft);
+        self
+    }
+    /// Authority account
     #[inline(always)]
     pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
         self.authority = Some(authority);
         self
     }
-    /// `[optional argument]`
+    /// Payer account
     #[inline(always)]
-    pub fn amount(&mut self, amount: u32) -> &mut Self {
-        self.amount = Some(amount);
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.payer = Some(payer);
+        self
+    }
+    /// `[optional account, default to '11111111111111111111111111111111']`
+    /// System program account
+    #[inline(always)]
+    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.system_program = Some(system_program);
+        self
+    }
+    #[inline(always)]
+    pub fn shares_per_token(&mut self, shares_per_token: u64) -> &mut Self {
+        self.shares_per_token = Some(shares_per_token);
         self
     }
     /// Add an aditional account to the instruction.
@@ -130,48 +170,71 @@ impl IncrementBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = Increment {
-            counter: self.counter.expect("counter is not set"),
+        let accounts = CreatePool {
+            pool: self.pool.expect("pool is not set"),
+            collection_nft: self.collection_nft.expect("collection_nft is not set"),
             authority: self.authority.expect("authority is not set"),
+            payer: self.payer.expect("payer is not set"),
+            system_program: self
+                .system_program
+                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
-        let args = IncrementInstructionArgs {
-            amount: self.amount.clone(),
+        let args = CreatePoolInstructionArgs {
+            shares_per_token: self
+                .shares_per_token
+                .clone()
+                .expect("shares_per_token is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
     }
 }
 
-/// `increment` CPI accounts.
-pub struct IncrementCpiAccounts<'a, 'b> {
-    /// The program derived address of the counter account to increment (seeds: ['counter', authority])
-    pub counter: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The authority of the counter
+/// `create_pool` CPI accounts.
+pub struct CreatePoolCpiAccounts<'a, 'b> {
+    /// Pool account to create (seeds: ['pool', collection_nft])
+    pub pool: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Collection NFT Metadata account
+    pub collection_nft: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Authority account
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Payer account
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    /// System program account
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `increment` CPI instruction.
-pub struct IncrementCpi<'a, 'b> {
+/// `create_pool` CPI instruction.
+pub struct CreatePoolCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The program derived address of the counter account to increment (seeds: ['counter', authority])
-    pub counter: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The authority of the counter
+    /// Pool account to create (seeds: ['pool', collection_nft])
+    pub pool: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Collection NFT Metadata account
+    pub collection_nft: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Authority account
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Payer account
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    /// System program account
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: IncrementInstructionArgs,
+    pub __args: CreatePoolInstructionArgs,
 }
 
-impl<'a, 'b> IncrementCpi<'a, 'b> {
+impl<'a, 'b> CreatePoolCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: IncrementCpiAccounts<'a, 'b>,
-        args: IncrementInstructionArgs,
+        accounts: CreatePoolCpiAccounts<'a, 'b>,
+        args: CreatePoolInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
-            counter: accounts.counter,
+            pool: accounts.pool,
+            collection_nft: accounts.collection_nft,
             authority: accounts.authority,
+            payer: accounts.payer,
+            system_program: accounts.system_program,
             __args: args,
         }
     }
@@ -208,14 +271,26 @@ impl<'a, 'b> IncrementCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.counter.key,
+            *self.pool.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.collection_nft.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.authority.key,
             true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.payer.key,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.system_program.key,
+            false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
@@ -224,7 +299,7 @@ impl<'a, 'b> IncrementCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = IncrementInstructionData::new().try_to_vec().unwrap();
+        let mut data = CreatePoolInstructionData::new().try_to_vec().unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -233,10 +308,13 @@ impl<'a, 'b> IncrementCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.counter.clone());
+        account_infos.push(self.pool.clone());
+        account_infos.push(self.collection_nft.clone());
         account_infos.push(self.authority.clone());
+        account_infos.push(self.payer.clone());
+        account_infos.push(self.system_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -249,38 +327,50 @@ impl<'a, 'b> IncrementCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `Increment` via CPI.
+/// Instruction builder for `CreatePool` via CPI.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` counter
-///   1. `[signer]` authority
+///   0. `[writable]` pool
+///   1. `[]` collection_nft
+///   2. `[signer]` authority
+///   3. `[writable, signer]` payer
+///   4. `[]` system_program
 #[derive(Clone, Debug)]
-pub struct IncrementCpiBuilder<'a, 'b> {
-    instruction: Box<IncrementCpiBuilderInstruction<'a, 'b>>,
+pub struct CreatePoolCpiBuilder<'a, 'b> {
+    instruction: Box<CreatePoolCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> IncrementCpiBuilder<'a, 'b> {
+impl<'a, 'b> CreatePoolCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(IncrementCpiBuilderInstruction {
+        let instruction = Box::new(CreatePoolCpiBuilderInstruction {
             __program: program,
-            counter: None,
+            pool: None,
+            collection_nft: None,
             authority: None,
-            amount: None,
+            payer: None,
+            system_program: None,
+            shares_per_token: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
     }
-    /// The program derived address of the counter account to increment (seeds: ['counter', authority])
+    /// Pool account to create (seeds: ['pool', collection_nft])
     #[inline(always)]
-    pub fn counter(
-        &mut self,
-        counter: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.counter = Some(counter);
+    pub fn pool(&mut self, pool: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.pool = Some(pool);
         self
     }
-    /// The authority of the counter
+    /// Collection NFT Metadata account
+    #[inline(always)]
+    pub fn collection_nft(
+        &mut self,
+        collection_nft: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.collection_nft = Some(collection_nft);
+        self
+    }
+    /// Authority account
     #[inline(always)]
     pub fn authority(
         &mut self,
@@ -289,10 +379,24 @@ impl<'a, 'b> IncrementCpiBuilder<'a, 'b> {
         self.instruction.authority = Some(authority);
         self
     }
-    /// `[optional argument]`
+    /// Payer account
     #[inline(always)]
-    pub fn amount(&mut self, amount: u32) -> &mut Self {
-        self.instruction.amount = Some(amount);
+    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.payer = Some(payer);
+        self
+    }
+    /// System program account
+    #[inline(always)]
+    pub fn system_program(
+        &mut self,
+        system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.system_program = Some(system_program);
+        self
+    }
+    #[inline(always)]
+    pub fn shares_per_token(&mut self, shares_per_token: u64) -> &mut Self {
+        self.instruction.shares_per_token = Some(shares_per_token);
         self
     }
     /// Add an additional account to the instruction.
@@ -336,15 +440,31 @@ impl<'a, 'b> IncrementCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = IncrementInstructionArgs {
-            amount: self.instruction.amount.clone(),
+        let args = CreatePoolInstructionArgs {
+            shares_per_token: self
+                .instruction
+                .shares_per_token
+                .clone()
+                .expect("shares_per_token is not set"),
         };
-        let instruction = IncrementCpi {
+        let instruction = CreatePoolCpi {
             __program: self.instruction.__program,
 
-            counter: self.instruction.counter.expect("counter is not set"),
+            pool: self.instruction.pool.expect("pool is not set"),
+
+            collection_nft: self
+                .instruction
+                .collection_nft
+                .expect("collection_nft is not set"),
 
             authority: self.instruction.authority.expect("authority is not set"),
+
+            payer: self.instruction.payer.expect("payer is not set"),
+
+            system_program: self
+                .instruction
+                .system_program
+                .expect("system_program is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -355,11 +475,14 @@ impl<'a, 'b> IncrementCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct IncrementCpiBuilderInstruction<'a, 'b> {
+struct CreatePoolCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    counter: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pool: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    collection_nft: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    amount: Option<u32>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    shares_per_token: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
