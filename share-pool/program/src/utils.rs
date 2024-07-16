@@ -9,7 +9,7 @@ use solana_program::{
     sysvar::Sysvar,
 };
 
-use crate::error::CounterError;
+use crate::error::SharePoolError;
 
 /// Create a new account from the given size.
 #[inline(always)]
@@ -110,12 +110,12 @@ pub fn transfer_lamports_from_pdas<'a>(
     **from.lamports.borrow_mut() = from
         .lamports()
         .checked_sub(lamports)
-        .ok_or::<ProgramError>(CounterError::NumericalOverflow.into())?;
+        .ok_or::<ProgramError>(SharePoolError::NumericalOverflow.into())?;
 
     **to.lamports.borrow_mut() = to
         .lamports()
         .checked_add(lamports)
-        .ok_or::<ProgramError>(CounterError::NumericalOverflow.into())?;
+        .ok_or::<ProgramError>(SharePoolError::NumericalOverflow.into())?;
 
     Ok(())
 }

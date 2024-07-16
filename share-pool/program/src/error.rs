@@ -7,7 +7,7 @@ use solana_program::{
 use thiserror::Error;
 
 #[derive(Error, Clone, Debug, Eq, PartialEq, FromPrimitive)]
-pub enum CounterError {
+pub enum SharePoolError {
     /// 0 - Error deserializing an account
     #[error("Error deserializing an account")]
     DeserializationError,
@@ -41,22 +41,28 @@ pub enum CounterError {
     /// 10 - Numerical overflow
     #[error("Numerical overflow")]
     NumericalOverflow,
+    /// 11 - Invalid space args
+    #[error("Invalid space args")]
+    InvalidSpaceArgs,
+    /// 12 - Invalid seed args
+    #[error("Invalid seed args")]
+    InvalidSeedArgs,
 }
 
-impl PrintProgramError for CounterError {
+impl PrintProgramError for SharePoolError {
     fn print<E>(&self) {
         msg!(&self.to_string());
     }
 }
 
-impl From<CounterError> for ProgramError {
-    fn from(e: CounterError) -> Self {
+impl From<SharePoolError> for ProgramError {
+    fn from(e: SharePoolError) -> Self {
         ProgramError::Custom(e as u32)
     }
 }
 
-impl<T> DecodeError<T> for CounterError {
+impl<T> DecodeError<T> for SharePoolError {
     fn type_of() -> &'static str {
-        "Mpl Project Name Error"
+        "Share Pool Error"
     }
 }

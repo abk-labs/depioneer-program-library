@@ -1,4 +1,4 @@
-use crate::{error::CounterError, state::Key};
+use crate::{error::SharePoolError, state::Key};
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
     pubkey::Pubkey,
@@ -18,7 +18,7 @@ pub fn assert_program_owner(
             owner,
             account.owner
         );
-        Err(CounterError::InvalidProgramOwner.into())
+        Err(SharePoolError::InvalidProgramOwner.into())
     } else {
         Ok(())
     }
@@ -39,7 +39,7 @@ pub fn assert_pda(
             account.key,
             key,
         );
-        return Err(CounterError::InvalidPda.into());
+        return Err(SharePoolError::InvalidPda.into());
     }
     Ok(bump)
 }
@@ -52,7 +52,7 @@ pub fn assert_empty(account_name: &str, account: &AccountInfo) -> ProgramResult 
             account_name,
             account.key,
         );
-        Err(CounterError::ExpectedEmptyAccount.into())
+        Err(SharePoolError::ExpectedEmptyAccount.into())
     } else {
         Ok(())
     }
@@ -66,7 +66,7 @@ pub fn assert_non_empty(account_name: &str, account: &AccountInfo) -> ProgramRes
             account_name,
             account.key,
         );
-        Err(CounterError::ExpectedNonEmptyAccount.into())
+        Err(SharePoolError::ExpectedNonEmptyAccount.into())
     } else {
         Ok(())
     }
@@ -80,7 +80,7 @@ pub fn assert_signer(account_name: &str, account: &AccountInfo) -> ProgramResult
             account_name,
             account.key,
         );
-        Err(CounterError::ExpectedSignerAccount.into())
+        Err(SharePoolError::ExpectedSignerAccount.into())
     } else {
         Ok(())
     }
@@ -94,7 +94,7 @@ pub fn assert_writable(account_name: &str, account: &AccountInfo) -> ProgramResu
             account_name,
             account.key,
         );
-        Err(CounterError::ExpectedWritableAccount.into())
+        Err(SharePoolError::ExpectedWritableAccount.into())
     } else {
         Ok(())
     }
@@ -113,7 +113,7 @@ pub fn assert_same_pubkeys(
             account.key,
             expected
         );
-        Err(CounterError::AccountMismatch.into())
+        Err(SharePoolError::AccountMismatch.into())
     } else {
         Ok(())
     }
@@ -130,7 +130,7 @@ pub fn assert_account_key(account_name: &str, account: &AccountInfo, key: Key) -
             key_number,
             account.try_borrow_data()?[0]
         );
-        Err(CounterError::InvalidAccountKey.into())
+        Err(SharePoolError::InvalidAccountKey.into())
     } else {
         Ok(())
     }
