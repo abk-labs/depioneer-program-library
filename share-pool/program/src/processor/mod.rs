@@ -1,7 +1,11 @@
 pub mod create_pool;
+pub mod create_pool_token_account;
+
+pub use create_pool::create_pool;
+pub use create_pool_token_account::create_pool_token_account;
 
 use borsh::BorshDeserialize;
-use create_pool::create_pool;
+
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 use crate::instruction::CounterInstruction;
@@ -16,6 +20,10 @@ pub fn process_instruction<'a>(
         CounterInstruction::CreatePool { args } => {
             msg!("Instruction: Create Pool");
             create_pool(accounts, args)
-        }
+        },
+        CounterInstruction::CreatePoolTokenAccount => {
+            msg!("Instruction: Create Pool Token Account");
+            create_pool_token_account(accounts)
+        },
     }
 }

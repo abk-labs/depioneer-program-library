@@ -47,6 +47,12 @@ pub enum SharePoolError {
     /// 12 - Invalid seed args
     #[error("Invalid seed args")]
     InvalidSeedArgs,
+    /// 13 - Invalid seeds
+    #[error("Invalid seeds")]
+    InvalidSeeds,
+    /// 14 - Invalid mint key
+    #[error("Invalid mint key")]
+    InvalidMintKey,
 }
 
 impl PrintProgramError for SharePoolError {

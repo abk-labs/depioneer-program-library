@@ -1,7 +1,8 @@
 pub mod pool;
 
-use borsh::{BorshDeserialize, BorshSerialize};
 pub use pool::*;
+
+use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
     pubkey::Pubkey,
@@ -17,16 +18,20 @@ pub enum Key {
 
 #[derive(Clone, Debug)]
 pub enum SharePoolAccountSpaceArgs {
-    Pool { pool_nfts: usize },
+    /// Args needed for the pool account.
+    Pool { pool_nfts: usize, pool_token_accounts: usize },
 }
 
-pub enum SharePoolAccountPdaArgs<'a> {
+pub enum SharePoolAccountSeedsArgs<'a> {
+    /// Seeds needed for the pool account.
     Pool {
         collection: &'a Pubkey,
         authority: &'a Pubkey,
     },
 }
 
+/// Common interface for all this program accounts, allowing for easy loading/saving,
+/// seed calculation, and space calculation.
 pub trait SharePoolAccount: BorshSerialize + BorshDeserialize {
     /// Loads the account from the given account info.
     fn load(account: &AccountInfo) -> Result<Self, ProgramError> {
@@ -36,6 +41,7 @@ pub trait SharePoolAccount: BorshSerialize + BorshDeserialize {
             SharePoolError::DeserializationError.into()
         })
     }
+
     /// Writes the account to the given account info.
     fn save(&self, account: &AccountInfo) -> ProgramResult {
         borsh::to_writer(&mut account.data.borrow_mut()[..], self).map_err(|error| {
@@ -43,12 +49,18 @@ pub trait SharePoolAccount: BorshSerialize + BorshDeserialize {
             SharePoolError::SerializationError.into()
         })
     }
+
     /// Returns the seeds for the account, without the program id or bump seed.
-    fn seeds(args: SharePoolAccountPdaArgs) -> Result<Vec<&[u8]>, SharePoolError>;
+    fn seeds(args: SharePoolAccountSeedsArgs) -> Result<Vec<&[u8]>, SharePoolError>;
+
     /// Returns the PDA and bump seed for the account.
-    fn find_pda(args: SharePoolAccountPdaArgs) -> Result<(Pubkey, u8), SharePoolError> {
-        let seeds = &Self::seeds(args)?;
-        Ok(Pubkey::find_program_address(seeds, &crate::ID))
+    fn find_pda(args: SharePoolAccountSeedsArgs) -> Result<(Pubkey, u8), SharePoolError> {
+        Ok(Pubkey::find_program_address(
+            &Self::seeds(args)?,
+            &crate::ID,
+        ))
     }
+
+    /// Calculates the space of the account.
     fn space(args: SharePoolAccountSpaceArgs) -> Result<usize, SharePoolError>;
 }

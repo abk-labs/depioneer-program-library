@@ -1,3 +1,7 @@
+pub mod spl;
+
+pub use spl::*;
+
 use crate::{error::SharePoolError, state::Key};
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
@@ -24,6 +28,26 @@ pub fn assert_program_owner(
     }
 }
 
+/// Assert that the given account is owned by one of the given programs.
+pub fn assert_program_owners(
+    account_name: &str,
+    account: &AccountInfo,
+    owners: &[Pubkey],
+) -> ProgramResult {
+    if !owners.contains(account.owner) {
+        msg!(
+            "Account \"{}\" [{}] expected program owner in {:?}, got [{}]",
+            account_name,
+            account.key,
+            owners,
+            account.owner
+        );
+        Err(SharePoolError::InvalidProgramOwner.into())
+    } else {
+        Ok(())
+    }
+}
+
 /// Assert the derivation of the seeds against the given account and return the bump seed.
 pub fn assert_pda(
     account_name: &str,
@@ -42,6 +66,33 @@ pub fn assert_pda(
         return Err(SharePoolError::InvalidPda.into());
     }
     Ok(bump)
+}
+
+/// Assert the derivation of the seeds and bump against the given account.
+pub fn assert_pda_with_bump(
+    account_name: &str,
+    account: &AccountInfo,
+    program_id: &Pubkey,
+    seeds_with_bump: &[&[u8]],
+) -> Result<(), ProgramError> {
+    let key = Pubkey::create_program_address(seeds_with_bump, program_id).map_err(|_| {
+        msg!(
+            "The seeds and bump passed for \"{}\" [{}] don't yield a valid PDA",
+            account_name,
+            account.key,
+        );
+        SharePoolError::InvalidSeeds
+    })?;
+    if *account.key != key {
+        msg!(
+            "Account \"{}\" [{}] is an invalid PDA. Expected the following valid PDA [{}]",
+            account_name,
+            account.key,
+            key,
+        );
+        return Err(SharePoolError::InvalidPda.into());
+    }
+    Ok(())
 }
 
 /// Assert that the given account is empty.

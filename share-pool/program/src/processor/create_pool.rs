@@ -6,7 +6,7 @@ use crate::{
         assert_writable,
     },
     instruction::{accounts::CreatePoolAccounts, create_pool::CreatePoolArgs},
-    state::{Pool, SharePoolAccount, SharePoolAccountPdaArgs, SharePoolAccountSpaceArgs},
+    state::{Pool, SharePoolAccount, SharePoolAccountSeedsArgs, SharePoolAccountSpaceArgs},
     utils::create_account,
 };
 
@@ -15,12 +15,11 @@ pub fn create_pool<'a>(accounts: &'a [AccountInfo<'a>], args: CreatePoolArgs) ->
     let ctx = CreatePoolAccounts::context(accounts)?;
 
     // Guards.
-    let pool_seeds = Pool::seeds(SharePoolAccountPdaArgs::Pool {
+    let pool_seeds = Pool::seeds(SharePoolAccountSeedsArgs::Pool {
         collection: ctx.accounts.pool.key,
         authority: ctx.accounts.authority.key,
     })?;
     let pool_bump = assert_pda("pool", ctx.accounts.pool, &crate::ID, &pool_seeds)?;
-    
     assert_empty("pool", ctx.accounts.pool)?;
     assert_program_owner(
         "collection_nft",
@@ -40,16 +39,21 @@ pub fn create_pool<'a>(accounts: &'a [AccountInfo<'a>], args: CreatePoolArgs) ->
     let pool_bump_seed = [pool_bump];
     pool_seeds.push(&pool_bump_seed);
 
+    let pool_space = Pool::space(SharePoolAccountSpaceArgs::Pool {
+        pool_nfts: 0,
+        pool_token_accounts: 0,
+    })?;
     create_account(
         ctx.accounts.pool,
         ctx.accounts.payer,
         ctx.accounts.system_program,
-        Pool::space(SharePoolAccountSpaceArgs::Pool { pool_nfts: 0 })?,
+        pool_space,
         &crate::ID,
         Some(&[&pool_seeds]),
     )?;
 
     Pool::new(
+        pool_bump,
         *ctx.accounts.pool.key,
         *ctx.accounts.authority.key,
         args.shares_per_token,
