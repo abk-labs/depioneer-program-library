@@ -14,6 +14,7 @@ use solana_program::pubkey::Pubkey;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Pool {
     pub key: Key,
+    pub bump: u8,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
@@ -26,6 +27,7 @@ pub struct Pool {
     pub authority: Pubkey,
     pub shares_per_token: u64,
     pub pool_nfts: Vec<(Pubkey, Pubkey)>,
+    pub pool_token_accounts: Vec<(Pubkey, Pubkey)>,
 }
 
 impl Pool {

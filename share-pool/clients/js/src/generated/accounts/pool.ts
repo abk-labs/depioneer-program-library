@@ -23,6 +23,8 @@ import {
   getTupleEncoder,
   getU64Decoder,
   getU64Encoder,
+  getU8Decoder,
+  getU8Encoder,
   type Account,
   type Address,
   type Codec,
@@ -38,28 +40,39 @@ import { getKeyDecoder, getKeyEncoder, type Key, type KeyArgs } from '../types';
 
 export type Pool = {
   key: Key;
+  bump: number;
   collection: Address;
   authority: Address;
   sharesPerToken: bigint;
   poolNfts: Array<readonly [Address, Address]>;
+  poolTokenAccounts: Array<readonly [Address, Address]>;
 };
 
 export type PoolArgs = {
   key: KeyArgs;
+  bump: number;
   collection: Address;
   authority: Address;
   sharesPerToken: number | bigint;
   poolNfts: Array<readonly [Address, Address]>;
+  poolTokenAccounts: Array<readonly [Address, Address]>;
 };
 
 export function getPoolEncoder(): Encoder<PoolArgs> {
   return getStructEncoder([
     ['key', getKeyEncoder()],
+    ['bump', getU8Encoder()],
     ['collection', getAddressEncoder()],
     ['authority', getAddressEncoder()],
     ['sharesPerToken', getU64Encoder()],
     [
       'poolNfts',
+      getArrayEncoder(
+        getTupleEncoder([getAddressEncoder(), getAddressEncoder()])
+      ),
+    ],
+    [
+      'poolTokenAccounts',
       getArrayEncoder(
         getTupleEncoder([getAddressEncoder(), getAddressEncoder()])
       ),
@@ -70,11 +83,18 @@ export function getPoolEncoder(): Encoder<PoolArgs> {
 export function getPoolDecoder(): Decoder<Pool> {
   return getStructDecoder([
     ['key', getKeyDecoder()],
+    ['bump', getU8Decoder()],
     ['collection', getAddressDecoder()],
     ['authority', getAddressDecoder()],
     ['sharesPerToken', getU64Decoder()],
     [
       'poolNfts',
+      getArrayDecoder(
+        getTupleDecoder([getAddressDecoder(), getAddressDecoder()])
+      ),
+    ],
+    [
+      'poolTokenAccounts',
       getArrayDecoder(
         getTupleDecoder([getAddressDecoder(), getAddressDecoder()])
       ),

@@ -49,6 +49,12 @@ pub enum SharePoolError {
     /// 12 - Invalid seed args
     #[error("Invalid seed args")]
     InvalidSeedArgs = 0xC,
+    /// 13 - Invalid seeds
+    #[error("Invalid seeds")]
+    InvalidSeeds = 0xD,
+    /// 14 - Invalid mint key
+    #[error("Invalid mint key")]
+    InvalidMintKey = 0xE,
 }
 
 impl solana_program::program_error::PrintProgramError for SharePoolError {

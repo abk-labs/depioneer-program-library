@@ -10,8 +10,6 @@ import {
   combineCodec,
   getStructDecoder,
   getStructEncoder,
-  getU64Decoder,
-  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -33,15 +31,22 @@ import {
 import { SHARE_POOL_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export type CreatePoolInstruction<
+export type CreatePoolTokenAccountInstruction<
   TProgram extends string = typeof SHARE_POOL_PROGRAM_ADDRESS,
   TAccountPool extends string | IAccountMeta<string> = string,
-  TAccountCollectionNft extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountPoolTokenAccount extends string | IAccountMeta<string> = string,
   TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
+  TAccountTokenProgram extends
+    | string
+    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
+  TAccountRent extends
+    | string
+    | IAccountMeta<string> = 'SysvarRent111111111111111111111111111111111',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -50,9 +55,12 @@ export type CreatePoolInstruction<
       TAccountPool extends string
         ? WritableAccount<TAccountPool>
         : TAccountPool,
-      TAccountCollectionNft extends string
-        ? ReadonlyAccount<TAccountCollectionNft>
-        : TAccountCollectionNft,
+      TAccountMint extends string
+        ? ReadonlyAccount<TAccountMint>
+        : TAccountMint,
+      TAccountPoolTokenAccount extends string
+        ? WritableAccount<TAccountPoolTokenAccount>
+        : TAccountPoolTokenAccount,
       TAccountAuthority extends string
         ? ReadonlySignerAccount<TAccountAuthority> &
             IAccountSignerMeta<TAccountAuthority>
@@ -61,88 +69,102 @@ export type CreatePoolInstruction<
         ? WritableSignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
+      TAccountRent extends string
+        ? ReadonlyAccount<TAccountRent>
+        : TAccountRent,
       ...TRemainingAccounts,
     ]
   >;
 
-export type CreatePoolInstructionData = {
-  discriminator: number;
-  sharesPerToken: bigint;
-};
+export type CreatePoolTokenAccountInstructionData = { discriminator: number };
 
-export type CreatePoolInstructionDataArgs = { sharesPerToken: number | bigint };
+export type CreatePoolTokenAccountInstructionDataArgs = {};
 
-export function getCreatePoolInstructionDataEncoder(): Encoder<CreatePoolInstructionDataArgs> {
+export function getCreatePoolTokenAccountInstructionDataEncoder(): Encoder<CreatePoolTokenAccountInstructionDataArgs> {
   return transformEncoder(
-    getStructEncoder([
-      ['discriminator', getU8Encoder()],
-      ['sharesPerToken', getU64Encoder()],
-    ]),
-    (value) => ({ ...value, discriminator: 0 })
+    getStructEncoder([['discriminator', getU8Encoder()]]),
+    (value) => ({ ...value, discriminator: 1 })
   );
 }
 
-export function getCreatePoolInstructionDataDecoder(): Decoder<CreatePoolInstructionData> {
-  return getStructDecoder([
-    ['discriminator', getU8Decoder()],
-    ['sharesPerToken', getU64Decoder()],
-  ]);
+export function getCreatePoolTokenAccountInstructionDataDecoder(): Decoder<CreatePoolTokenAccountInstructionData> {
+  return getStructDecoder([['discriminator', getU8Decoder()]]);
 }
 
-export function getCreatePoolInstructionDataCodec(): Codec<
-  CreatePoolInstructionDataArgs,
-  CreatePoolInstructionData
+export function getCreatePoolTokenAccountInstructionDataCodec(): Codec<
+  CreatePoolTokenAccountInstructionDataArgs,
+  CreatePoolTokenAccountInstructionData
 > {
   return combineCodec(
-    getCreatePoolInstructionDataEncoder(),
-    getCreatePoolInstructionDataDecoder()
+    getCreatePoolTokenAccountInstructionDataEncoder(),
+    getCreatePoolTokenAccountInstructionDataDecoder()
   );
 }
 
-export type CreatePoolInput<
+export type CreatePoolTokenAccountInput<
   TAccountPool extends string = string,
-  TAccountCollectionNft extends string = string,
+  TAccountMint extends string = string,
+  TAccountPoolTokenAccount extends string = string,
   TAccountAuthority extends string = string,
   TAccountPayer extends string = string,
+  TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
+  TAccountRent extends string = string,
 > = {
-  /** Pool account to create (seeds: ['pool', collection_nft, authority]) */
+  /** Pool account to add mint (seeds: ['pool', mint, pool_token_account, authority]) */
   pool: Address<TAccountPool>;
-  /** Collection NFT Metadata account */
-  collectionNft: Address<TAccountCollectionNft>;
+  /** Mint account to add */
+  mint: Address<TAccountMint>;
+  /** Pool token account to save (seeds: ['pool_token_account', pool, mint]) */
+  poolTokenAccount: Address<TAccountPoolTokenAccount>;
   /** Authority account */
   authority: TransactionSigner<TAccountAuthority>;
   /** Payer account */
   payer: TransactionSigner<TAccountPayer>;
+  /** Token program account */
+  tokenProgram?: Address<TAccountTokenProgram>;
   /** System program account */
   systemProgram?: Address<TAccountSystemProgram>;
-  sharesPerToken: CreatePoolInstructionDataArgs['sharesPerToken'];
+  /** Rent sysvar account */
+  rent?: Address<TAccountRent>;
 };
 
-export function getCreatePoolInstruction<
+export function getCreatePoolTokenAccountInstruction<
   TAccountPool extends string,
-  TAccountCollectionNft extends string,
+  TAccountMint extends string,
+  TAccountPoolTokenAccount extends string,
   TAccountAuthority extends string,
   TAccountPayer extends string,
+  TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
+  TAccountRent extends string,
 >(
-  input: CreatePoolInput<
+  input: CreatePoolTokenAccountInput<
     TAccountPool,
-    TAccountCollectionNft,
+    TAccountMint,
+    TAccountPoolTokenAccount,
     TAccountAuthority,
     TAccountPayer,
-    TAccountSystemProgram
+    TAccountTokenProgram,
+    TAccountSystemProgram,
+    TAccountRent
   >
-): CreatePoolInstruction<
+): CreatePoolTokenAccountInstruction<
   typeof SHARE_POOL_PROGRAM_ADDRESS,
   TAccountPool,
-  TAccountCollectionNft,
+  TAccountMint,
+  TAccountPoolTokenAccount,
   TAccountAuthority,
   TAccountPayer,
-  TAccountSystemProgram
+  TAccountTokenProgram,
+  TAccountSystemProgram,
+  TAccountRent
 > {
   // Program address.
   const programAddress = SHARE_POOL_PROGRAM_ADDRESS;
@@ -150,79 +172,100 @@ export function getCreatePoolInstruction<
   // Original accounts.
   const originalAccounts = {
     pool: { value: input.pool ?? null, isWritable: true },
-    collectionNft: { value: input.collectionNft ?? null, isWritable: false },
+    mint: { value: input.mint ?? null, isWritable: false },
+    poolTokenAccount: {
+      value: input.poolTokenAccount ?? null,
+      isWritable: true,
+    },
     authority: { value: input.authority ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    rent: { value: input.rent ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
-
   // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.rent.value) {
+    accounts.rent.value =
+      'SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.pool),
-      getAccountMeta(accounts.collectionNft),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.poolTokenAccount),
       getAccountMeta(accounts.authority),
       getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.rent),
     ],
     programAddress,
-    data: getCreatePoolInstructionDataEncoder().encode(
-      args as CreatePoolInstructionDataArgs
-    ),
-  } as CreatePoolInstruction<
+    data: getCreatePoolTokenAccountInstructionDataEncoder().encode({}),
+  } as CreatePoolTokenAccountInstruction<
     typeof SHARE_POOL_PROGRAM_ADDRESS,
     TAccountPool,
-    TAccountCollectionNft,
+    TAccountMint,
+    TAccountPoolTokenAccount,
     TAccountAuthority,
     TAccountPayer,
-    TAccountSystemProgram
+    TAccountTokenProgram,
+    TAccountSystemProgram,
+    TAccountRent
   >;
 
   return instruction;
 }
 
-export type ParsedCreatePoolInstruction<
+export type ParsedCreatePoolTokenAccountInstruction<
   TProgram extends string = typeof SHARE_POOL_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** Pool account to create (seeds: ['pool', collection_nft, authority]) */
+    /** Pool account to add mint (seeds: ['pool', mint, pool_token_account, authority]) */
     pool: TAccountMetas[0];
-    /** Collection NFT Metadata account */
-    collectionNft: TAccountMetas[1];
+    /** Mint account to add */
+    mint: TAccountMetas[1];
+    /** Pool token account to save (seeds: ['pool_token_account', pool, mint]) */
+    poolTokenAccount: TAccountMetas[2];
     /** Authority account */
-    authority: TAccountMetas[2];
+    authority: TAccountMetas[3];
     /** Payer account */
-    payer: TAccountMetas[3];
+    payer: TAccountMetas[4];
+    /** Token program account */
+    tokenProgram: TAccountMetas[5];
     /** System program account */
-    systemProgram: TAccountMetas[4];
+    systemProgram: TAccountMetas[6];
+    /** Rent sysvar account */
+    rent: TAccountMetas[7];
   };
-  data: CreatePoolInstructionData;
+  data: CreatePoolTokenAccountInstructionData;
 };
 
-export function parseCreatePoolInstruction<
+export function parseCreatePoolTokenAccountInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedCreatePoolInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+): ParsedCreatePoolTokenAccountInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -236,11 +279,16 @@ export function parseCreatePoolInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       pool: getNextAccount(),
-      collectionNft: getNextAccount(),
+      mint: getNextAccount(),
+      poolTokenAccount: getNextAccount(),
       authority: getNextAccount(),
       payer: getNextAccount(),
+      tokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
+      rent: getNextAccount(),
     },
-    data: getCreatePoolInstructionDataDecoder().decode(instruction.data),
+    data: getCreatePoolTokenAccountInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }

@@ -32,6 +32,10 @@ export const SHARE_POOL_ERROR__NUMERICAL_OVERFLOW = 0xa; // 10
 export const SHARE_POOL_ERROR__INVALID_SPACE_ARGS = 0xb; // 11
 /** InvalidSeedArgs: Invalid seed args */
 export const SHARE_POOL_ERROR__INVALID_SEED_ARGS = 0xc; // 12
+/** InvalidSeeds: Invalid seeds */
+export const SHARE_POOL_ERROR__INVALID_SEEDS = 0xd; // 13
+/** InvalidMintKey: Invalid mint key */
+export const SHARE_POOL_ERROR__INVALID_MINT_KEY = 0xe; // 14
 
 export type SharePoolError =
   | typeof SHARE_POOL_ERROR__ACCOUNT_MISMATCH
@@ -41,9 +45,11 @@ export type SharePoolError =
   | typeof SHARE_POOL_ERROR__EXPECTED_SIGNER_ACCOUNT
   | typeof SHARE_POOL_ERROR__EXPECTED_WRITABLE_ACCOUNT
   | typeof SHARE_POOL_ERROR__INVALID_ACCOUNT_KEY
+  | typeof SHARE_POOL_ERROR__INVALID_MINT_KEY
   | typeof SHARE_POOL_ERROR__INVALID_PDA
   | typeof SHARE_POOL_ERROR__INVALID_PROGRAM_OWNER
   | typeof SHARE_POOL_ERROR__INVALID_SEED_ARGS
+  | typeof SHARE_POOL_ERROR__INVALID_SEEDS
   | typeof SHARE_POOL_ERROR__INVALID_SPACE_ARGS
   | typeof SHARE_POOL_ERROR__NUMERICAL_OVERFLOW
   | typeof SHARE_POOL_ERROR__SERIALIZATION_ERROR;
@@ -58,9 +64,11 @@ if (process.env.NODE_ENV !== 'production') {
     [SHARE_POOL_ERROR__EXPECTED_SIGNER_ACCOUNT]: `Expected signer account`,
     [SHARE_POOL_ERROR__EXPECTED_WRITABLE_ACCOUNT]: `Expected writable account`,
     [SHARE_POOL_ERROR__INVALID_ACCOUNT_KEY]: `Invalid account key`,
+    [SHARE_POOL_ERROR__INVALID_MINT_KEY]: `Invalid mint key`,
     [SHARE_POOL_ERROR__INVALID_PDA]: `Invalid PDA derivation`,
     [SHARE_POOL_ERROR__INVALID_PROGRAM_OWNER]: `Invalid program owner. This likely mean the provided account does not exist`,
     [SHARE_POOL_ERROR__INVALID_SEED_ARGS]: `Invalid seed args`,
+    [SHARE_POOL_ERROR__INVALID_SEEDS]: `Invalid seeds`,
     [SHARE_POOL_ERROR__INVALID_SPACE_ARGS]: `Invalid space args`,
     [SHARE_POOL_ERROR__NUMERICAL_OVERFLOW]: `Numerical overflow`,
     [SHARE_POOL_ERROR__SERIALIZATION_ERROR]: `Error serializing an account`,

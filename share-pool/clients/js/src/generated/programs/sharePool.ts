@@ -7,7 +7,10 @@
  */
 
 import { containsBytes, getU8Encoder, type Address } from '@solana/web3.js';
-import { type ParsedCreatePoolInstruction } from '../instructions';
+import {
+  type ParsedCreatePoolInstruction,
+  type ParsedCreatePoolTokenAccountInstruction,
+} from '../instructions';
 
 export const SHARE_POOL_PROGRAM_ADDRESS =
   'AGFRndPmfcdYfPf1rqbkuY6Ku18UHUVnLoz2JEuC768r' as Address<'AGFRndPmfcdYfPf1rqbkuY6Ku18UHUVnLoz2JEuC768r'>;
@@ -18,6 +21,7 @@ export enum SharePoolAccount {
 
 export enum SharePoolInstruction {
   CreatePool,
+  CreatePoolTokenAccount,
 }
 
 export function identifySharePoolInstruction(
@@ -28,6 +32,9 @@ export function identifySharePoolInstruction(
   if (containsBytes(data, getU8Encoder().encode(0), 0)) {
     return SharePoolInstruction.CreatePool;
   }
+  if (containsBytes(data, getU8Encoder().encode(1), 0)) {
+    return SharePoolInstruction.CreatePoolTokenAccount;
+  }
   throw new Error(
     'The provided instruction could not be identified as a sharePool instruction.'
   );
@@ -35,6 +42,10 @@ export function identifySharePoolInstruction(
 
 export type ParsedSharePoolInstruction<
   TProgram extends string = 'AGFRndPmfcdYfPf1rqbkuY6Ku18UHUVnLoz2JEuC768r',
-> = {
-  instructionType: SharePoolInstruction.CreatePool;
-} & ParsedCreatePoolInstruction<TProgram>;
+> =
+  | ({
+      instructionType: SharePoolInstruction.CreatePool;
+    } & ParsedCreatePoolInstruction<TProgram>)
+  | ({
+      instructionType: SharePoolInstruction.CreatePoolTokenAccount;
+    } & ParsedCreatePoolTokenAccountInstruction<TProgram>);

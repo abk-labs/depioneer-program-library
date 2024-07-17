@@ -6,5 +6,7 @@
 //!
 
 pub(crate) mod r#create_pool;
+pub(crate) mod r#create_pool_token_account;
 
 pub use self::r#create_pool::*;
+pub use self::r#create_pool_token_account::*;

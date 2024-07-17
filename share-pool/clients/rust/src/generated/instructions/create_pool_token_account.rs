@@ -9,38 +9,43 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct CreatePool {
-    /// Pool account to create (seeds: ['pool', collection_nft, authority])
+pub struct CreatePoolTokenAccount {
+    /// Pool account to add mint (seeds: ['pool', mint, pool_token_account, authority])
     pub pool: solana_program::pubkey::Pubkey,
-    /// Collection NFT Metadata account
-    pub collection_nft: solana_program::pubkey::Pubkey,
+    /// Mint account to add
+    pub mint: solana_program::pubkey::Pubkey,
+    /// Pool token account to save (seeds: ['pool_token_account', pool, mint])
+    pub pool_token_account: solana_program::pubkey::Pubkey,
     /// Authority account
     pub authority: solana_program::pubkey::Pubkey,
     /// Payer account
     pub payer: solana_program::pubkey::Pubkey,
+    /// Token program account
+    pub token_program: solana_program::pubkey::Pubkey,
     /// System program account
     pub system_program: solana_program::pubkey::Pubkey,
+    /// Rent sysvar account
+    pub rent: solana_program::pubkey::Pubkey,
 }
 
-impl CreatePool {
-    pub fn instruction(
-        &self,
-        args: CreatePoolInstructionArgs,
-    ) -> solana_program::instruction::Instruction {
-        self.instruction_with_remaining_accounts(args, &[])
+impl CreatePoolTokenAccount {
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+        self.instruction_with_remaining_accounts(&[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: CreatePoolInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.pool, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.collection_nft,
+            self.mint, false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.pool_token_account,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -51,13 +56,20 @@ impl CreatePool {
             self.payer, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.token_program,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.rent, false,
+        ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = CreatePoolInstructionData::new().try_to_vec().unwrap();
-        let mut args = args.try_to_vec().unwrap();
-        data.append(&mut args);
+        let data = CreatePoolTokenAccountInstructionData::new()
+            .try_to_vec()
+            .unwrap();
 
         solana_program::instruction::Instruction {
             program_id: crate::SHARE_POOL_ID,
@@ -68,62 +80,70 @@ impl CreatePool {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct CreatePoolInstructionData {
+pub struct CreatePoolTokenAccountInstructionData {
     discriminator: u8,
 }
 
-impl CreatePoolInstructionData {
+impl CreatePoolTokenAccountInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 0 }
+        Self { discriminator: 1 }
     }
 }
 
-impl Default for CreatePoolInstructionData {
+impl Default for CreatePoolTokenAccountInstructionData {
     fn default() -> Self {
         Self::new()
     }
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct CreatePoolInstructionArgs {
-    pub shares_per_token: u64,
-}
-
-/// Instruction builder for `CreatePool`.
+/// Instruction builder for `CreatePoolTokenAccount`.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` pool
-///   1. `[]` collection_nft
-///   2. `[signer]` authority
-///   3. `[writable, signer]` payer
-///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   1. `[]` mint
+///   2. `[writable]` pool_token_account
+///   3. `[signer]` authority
+///   4. `[writable, signer]` payer
+///   5. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   7. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
-pub struct CreatePoolBuilder {
+pub struct CreatePoolTokenAccountBuilder {
     pool: Option<solana_program::pubkey::Pubkey>,
-    collection_nft: Option<solana_program::pubkey::Pubkey>,
+    mint: Option<solana_program::pubkey::Pubkey>,
+    pool_token_account: Option<solana_program::pubkey::Pubkey>,
     authority: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
+    token_program: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    shares_per_token: Option<u64>,
+    rent: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl CreatePoolBuilder {
+impl CreatePoolTokenAccountBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-    /// Pool account to create (seeds: ['pool', collection_nft, authority])
+    /// Pool account to add mint (seeds: ['pool', mint, pool_token_account, authority])
     #[inline(always)]
     pub fn pool(&mut self, pool: solana_program::pubkey::Pubkey) -> &mut Self {
         self.pool = Some(pool);
         self
     }
-    /// Collection NFT Metadata account
+    /// Mint account to add
     #[inline(always)]
-    pub fn collection_nft(&mut self, collection_nft: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.collection_nft = Some(collection_nft);
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
+        self
+    }
+    /// Pool token account to save (seeds: ['pool_token_account', pool, mint])
+    #[inline(always)]
+    pub fn pool_token_account(
+        &mut self,
+        pool_token_account: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.pool_token_account = Some(pool_token_account);
         self
     }
     /// Authority account
@@ -138,6 +158,13 @@ impl CreatePoolBuilder {
         self.payer = Some(payer);
         self
     }
+    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// Token program account
+    #[inline(always)]
+    pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.token_program = Some(token_program);
+        self
+    }
     /// `[optional account, default to '11111111111111111111111111111111']`
     /// System program account
     #[inline(always)]
@@ -145,9 +172,11 @@ impl CreatePoolBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
+    /// Rent sysvar account
     #[inline(always)]
-    pub fn shares_per_token(&mut self, shares_per_token: u64) -> &mut Self {
-        self.shares_per_token = Some(shares_per_token);
+    pub fn rent(&mut self, rent: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.rent = Some(rent);
         self
     }
     /// Add an aditional account to the instruction.
@@ -170,72 +199,86 @@ impl CreatePoolBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = CreatePool {
+        let accounts = CreatePoolTokenAccount {
             pool: self.pool.expect("pool is not set"),
-            collection_nft: self.collection_nft.expect("collection_nft is not set"),
+            mint: self.mint.expect("mint is not set"),
+            pool_token_account: self
+                .pool_token_account
+                .expect("pool_token_account is not set"),
             authority: self.authority.expect("authority is not set"),
             payer: self.payer.expect("payer is not set"),
+            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-        };
-        let args = CreatePoolInstructionArgs {
-            shares_per_token: self
-                .shares_per_token
-                .clone()
-                .expect("shares_per_token is not set"),
+            rent: self.rent.unwrap_or(solana_program::pubkey!(
+                "SysvarRent111111111111111111111111111111111"
+            )),
         };
 
-        accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
+        accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
     }
 }
 
-/// `create_pool` CPI accounts.
-pub struct CreatePoolCpiAccounts<'a, 'b> {
-    /// Pool account to create (seeds: ['pool', collection_nft, authority])
+/// `create_pool_token_account` CPI accounts.
+pub struct CreatePoolTokenAccountCpiAccounts<'a, 'b> {
+    /// Pool account to add mint (seeds: ['pool', mint, pool_token_account, authority])
     pub pool: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Collection NFT Metadata account
-    pub collection_nft: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Mint account to add
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Pool token account to save (seeds: ['pool_token_account', pool, mint])
+    pub pool_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authority account
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Payer account
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Token program account
+    pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// System program account
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Rent sysvar account
+    pub rent: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `create_pool` CPI instruction.
-pub struct CreatePoolCpi<'a, 'b> {
+/// `create_pool_token_account` CPI instruction.
+pub struct CreatePoolTokenAccountCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Pool account to create (seeds: ['pool', collection_nft, authority])
+    /// Pool account to add mint (seeds: ['pool', mint, pool_token_account, authority])
     pub pool: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Collection NFT Metadata account
-    pub collection_nft: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Mint account to add
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Pool token account to save (seeds: ['pool_token_account', pool, mint])
+    pub pool_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authority account
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Payer account
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Token program account
+    pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// System program account
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The arguments for the instruction.
-    pub __args: CreatePoolInstructionArgs,
+    /// Rent sysvar account
+    pub rent: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-impl<'a, 'b> CreatePoolCpi<'a, 'b> {
+impl<'a, 'b> CreatePoolTokenAccountCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: CreatePoolCpiAccounts<'a, 'b>,
-        args: CreatePoolInstructionArgs,
+        accounts: CreatePoolTokenAccountCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
             __program: program,
             pool: accounts.pool,
-            collection_nft: accounts.collection_nft,
+            mint: accounts.mint,
+            pool_token_account: accounts.pool_token_account,
             authority: accounts.authority,
             payer: accounts.payer,
+            token_program: accounts.token_program,
             system_program: accounts.system_program,
-            __args: args,
+            rent: accounts.rent,
         }
     }
     #[inline(always)]
@@ -271,13 +314,17 @@ impl<'a, 'b> CreatePoolCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.pool.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.collection_nft.key,
+            *self.mint.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.pool_token_account.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -289,7 +336,15 @@ impl<'a, 'b> CreatePoolCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.token_program.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.system_program.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.rent.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -299,22 +354,25 @@ impl<'a, 'b> CreatePoolCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = CreatePoolInstructionData::new().try_to_vec().unwrap();
-        let mut args = self.__args.try_to_vec().unwrap();
-        data.append(&mut args);
+        let data = CreatePoolTokenAccountInstructionData::new()
+            .try_to_vec()
+            .unwrap();
 
         let instruction = solana_program::instruction::Instruction {
             program_id: crate::SHARE_POOL_ID,
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(8 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.pool.clone());
-        account_infos.push(self.collection_nft.clone());
+        account_infos.push(self.mint.clone());
+        account_infos.push(self.pool_token_account.clone());
         account_infos.push(self.authority.clone());
         account_infos.push(self.payer.clone());
+        account_infos.push(self.token_program.clone());
         account_infos.push(self.system_program.clone());
+        account_infos.push(self.rent.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -327,47 +385,58 @@ impl<'a, 'b> CreatePoolCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `CreatePool` via CPI.
+/// Instruction builder for `CreatePoolTokenAccount` via CPI.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` pool
-///   1. `[]` collection_nft
-///   2. `[signer]` authority
-///   3. `[writable, signer]` payer
-///   4. `[]` system_program
+///   1. `[]` mint
+///   2. `[writable]` pool_token_account
+///   3. `[signer]` authority
+///   4. `[writable, signer]` payer
+///   5. `[]` token_program
+///   6. `[]` system_program
+///   7. `[]` rent
 #[derive(Clone, Debug)]
-pub struct CreatePoolCpiBuilder<'a, 'b> {
-    instruction: Box<CreatePoolCpiBuilderInstruction<'a, 'b>>,
+pub struct CreatePoolTokenAccountCpiBuilder<'a, 'b> {
+    instruction: Box<CreatePoolTokenAccountCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> CreatePoolCpiBuilder<'a, 'b> {
+impl<'a, 'b> CreatePoolTokenAccountCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(CreatePoolCpiBuilderInstruction {
+        let instruction = Box::new(CreatePoolTokenAccountCpiBuilderInstruction {
             __program: program,
             pool: None,
-            collection_nft: None,
+            mint: None,
+            pool_token_account: None,
             authority: None,
             payer: None,
+            token_program: None,
             system_program: None,
-            shares_per_token: None,
+            rent: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
     }
-    /// Pool account to create (seeds: ['pool', collection_nft, authority])
+    /// Pool account to add mint (seeds: ['pool', mint, pool_token_account, authority])
     #[inline(always)]
     pub fn pool(&mut self, pool: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.pool = Some(pool);
         self
     }
-    /// Collection NFT Metadata account
+    /// Mint account to add
     #[inline(always)]
-    pub fn collection_nft(
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
+        self
+    }
+    /// Pool token account to save (seeds: ['pool_token_account', pool, mint])
+    #[inline(always)]
+    pub fn pool_token_account(
         &mut self,
-        collection_nft: &'b solana_program::account_info::AccountInfo<'a>,
+        pool_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.collection_nft = Some(collection_nft);
+        self.instruction.pool_token_account = Some(pool_token_account);
         self
     }
     /// Authority account
@@ -385,6 +454,15 @@ impl<'a, 'b> CreatePoolCpiBuilder<'a, 'b> {
         self.instruction.payer = Some(payer);
         self
     }
+    /// Token program account
+    #[inline(always)]
+    pub fn token_program(
+        &mut self,
+        token_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.token_program = Some(token_program);
+        self
+    }
     /// System program account
     #[inline(always)]
     pub fn system_program(
@@ -394,9 +472,10 @@ impl<'a, 'b> CreatePoolCpiBuilder<'a, 'b> {
         self.instruction.system_program = Some(system_program);
         self
     }
+    /// Rent sysvar account
     #[inline(always)]
-    pub fn shares_per_token(&mut self, shares_per_token: u64) -> &mut Self {
-        self.instruction.shares_per_token = Some(shares_per_token);
+    pub fn rent(&mut self, rent: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.rent = Some(rent);
         self
     }
     /// Add an additional account to the instruction.
@@ -440,32 +519,33 @@ impl<'a, 'b> CreatePoolCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = CreatePoolInstructionArgs {
-            shares_per_token: self
-                .instruction
-                .shares_per_token
-                .clone()
-                .expect("shares_per_token is not set"),
-        };
-        let instruction = CreatePoolCpi {
+        let instruction = CreatePoolTokenAccountCpi {
             __program: self.instruction.__program,
 
             pool: self.instruction.pool.expect("pool is not set"),
 
-            collection_nft: self
+            mint: self.instruction.mint.expect("mint is not set"),
+
+            pool_token_account: self
                 .instruction
-                .collection_nft
-                .expect("collection_nft is not set"),
+                .pool_token_account
+                .expect("pool_token_account is not set"),
 
             authority: self.instruction.authority.expect("authority is not set"),
 
             payer: self.instruction.payer.expect("payer is not set"),
 
+            token_program: self
+                .instruction
+                .token_program
+                .expect("token_program is not set"),
+
             system_program: self
                 .instruction
                 .system_program
                 .expect("system_program is not set"),
-            __args: args,
+
+            rent: self.instruction.rent.expect("rent is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -475,14 +555,16 @@ impl<'a, 'b> CreatePoolCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct CreatePoolCpiBuilderInstruction<'a, 'b> {
+struct CreatePoolTokenAccountCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     pool: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    collection_nft: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pool_token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    shares_per_token: Option<u64>,
+    rent: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

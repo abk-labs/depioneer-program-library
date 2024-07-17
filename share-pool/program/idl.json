@@ -10,7 +10,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Pool account to create (seeds: ['pool', collection_nft])"
+            "Pool account to create (seeds: ['pool', collection_nft, authority])"
           ]
         },
         {
@@ -58,6 +58,80 @@
         "type": "u8",
         "value": 0
       }
+    },
+    {
+      "name": "CreatePoolTokenAccount",
+      "accounts": [
+        {
+          "name": "pool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Pool account to add mint (seeds: ['pool', mint, pool_token_account, authority])"
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Mint account to add"
+          ]
+        },
+        {
+          "name": "poolTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Pool token account to save (seeds: ['pool_token_account', pool, mint])"
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Authority account"
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Payer account"
+          ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Token program account"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program account"
+          ]
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Rent sysvar account"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
     }
   ],
   "accounts": [
@@ -73,6 +147,10 @@
             }
           },
           {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
             "name": "collection",
             "type": "publicKey"
           },
@@ -86,6 +164,17 @@
           },
           {
             "name": "poolNfts",
+            "type": {
+              "vec": {
+                "tuple": [
+                  "publicKey",
+                  "publicKey"
+                ]
+              }
+            }
+          },
+          {
+            "name": "poolTokenAccounts",
             "type": {
               "vec": {
                 "tuple": [
@@ -192,6 +281,16 @@
       "code": 12,
       "name": "InvalidSeedArgs",
       "msg": "Invalid seed args"
+    },
+    {
+      "code": 13,
+      "name": "InvalidSeeds",
+      "msg": "Invalid seeds"
+    },
+    {
+      "code": 14,
+      "name": "InvalidMintKey",
+      "msg": "Invalid mint key"
     }
   ],
   "metadata": {
