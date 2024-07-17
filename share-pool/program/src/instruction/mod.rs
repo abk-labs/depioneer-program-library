@@ -8,7 +8,7 @@ use shank::{ShankContext, ShankInstruction};
 #[rustfmt::skip]
 pub enum CounterInstruction {
     #[account(0, writable, name="pool", desc="Pool account to create (seeds: ['pool', collection_nft, authority])")]
-    #[account(1, name="collection_nft", desc="Collection NFT Metadata account")]
+    #[account(1, name="collection_nft_mint", desc="Collection NFT Metadata account")]
     #[account(2, signer, name="authority", desc="Authority account")]
     #[account(3, signer, writable, name="payer", desc="Payer account")]
     #[account(4, name="system_program", desc="System program account")]

@@ -21,4 +21,5 @@ thiserror = "^1.0"
 [dev-dependencies]
 assert_matches = "1.5.0"
 solana-program-test = "~1.18"
+spl-token = { version = "^4.0.0", features = ["no-entrypoint"] }
 solana-sdk = "~1.18"

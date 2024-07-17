@@ -16,15 +16,15 @@ pub fn create_pool<'a>(accounts: &'a [AccountInfo<'a>], args: CreatePoolArgs) ->
 
     // Guards.
     let pool_seeds = Pool::seeds(SharePoolAccountSeedsArgs::Pool {
-        collection: ctx.accounts.pool.key,
+        collection: ctx.accounts.collection_nft_mint.key,
         authority: ctx.accounts.authority.key,
     })?;
     let pool_bump = assert_pda("pool", ctx.accounts.pool, &crate::ID, &pool_seeds)?;
     assert_empty("pool", ctx.accounts.pool)?;
     assert_program_owner(
-        "collection_nft",
-        ctx.accounts.collection_nft,
-        &mpl_token_metadata::ID,
+        "collection_nft_mint",
+        ctx.accounts.collection_nft_mint,
+        &spl_token::ID,
     )?;
     assert_signer("authority", ctx.accounts.authority)?;
     assert_signer("payer", ctx.accounts.payer)?;
