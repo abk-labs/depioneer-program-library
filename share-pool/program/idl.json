@@ -14,7 +14,7 @@
           ]
         },
         {
-          "name": "collectionNft",
+          "name": "collectionNftMint",
           "isMut": false,
           "isSigner": false,
           "docs": [

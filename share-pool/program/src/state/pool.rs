@@ -4,20 +4,20 @@ use solana_program::pubkey::Pubkey;
 
 use crate::error::SharePoolError;
 
-use super::{Key, SharePoolAccount, SharePoolAccountSeedsArgs, SharePoolAccountSpaceArgs};
+use super::{
+    AtaMintPair, Key, SharePoolAccount, SharePoolAccountSeedsArgs, SharePoolAccountSpaceArgs,
+};
 
 #[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Debug, ShankAccount)]
+#[derive(ShankAccount, BorshSerialize, BorshDeserialize, Clone, Debug)]
 pub struct Pool {
     pub key: Key,
     pub bump: u8,
     pub collection: Pubkey,
     pub authority: Pubkey,
     pub shares_per_token: u64,
-    // (nft address, mint address)
-    pub pool_nfts: Vec<(Pubkey, Pubkey)>,
-    // (pool token account, pool token mint)
-    pub pool_token_accounts: Vec<(Pubkey, Pubkey)>,
+    pub pool_nfts: Vec<AtaMintPair>,
+    pub pool_token_accounts: Vec<AtaMintPair>,
 }
 
 impl Pool {
@@ -37,14 +37,18 @@ impl Pool {
 impl SharePoolAccount for Pool {
     fn space(args: SharePoolAccountSpaceArgs) -> Result<usize, SharePoolError> {
         #[allow(irrefutable_let_patterns)]
-        if let SharePoolAccountSpaceArgs::Pool { pool_nfts, pool_token_accounts } = args {
+        if let SharePoolAccountSpaceArgs::Pool {
+            pool_nfts,
+            pool_token_accounts,
+        } = args
+        {
             let mut space = 1; // Key
             space += 1; // bump
             space += 32; // collection
             space += 32; // authority
             space += 8; // shares_per_token
-            space += 4 + (pool_nfts * (32 + 32)); // pool_nfts
-            space += 4 + (pool_token_accounts * (32 + 32)); // pool_token_accounts
+            space += 4 + (pool_nfts * AtaMintPair::LEN); // pool_nfts
+            space += 4 + (pool_token_accounts * AtaMintPair::LEN); // pool_token_accounts
             return Ok(space);
         }
         Err(SharePoolError::InvalidSpaceArgs)

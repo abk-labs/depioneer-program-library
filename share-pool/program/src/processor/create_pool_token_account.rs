@@ -5,12 +5,15 @@ use spl_token_2022::instruction::initialize_account;
 
 use crate::{
     assertions::{
-        assert_empty, assert_non_empty, assert_owned_by_token_program_interface,
-        assert_pda_with_bump, assert_program_owner, assert_same_pubkeys, assert_signer,
-        assert_writable,
+        assert_account_key, assert_empty, assert_non_empty,
+        assert_owned_by_token_program_interface, assert_pda_with_bump, assert_program_owner,
+        assert_same_pubkeys, assert_signer, assert_writable,
     },
     instruction::accounts::CreatePoolTokenAccountAccounts,
-    state::{Pool, SharePoolAccount, SharePoolAccountSeedsArgs, SharePoolAccountSpaceArgs},
+    state::{
+        AtaMintPair, Key, Pool, SharePoolAccount, SharePoolAccountSeedsArgs,
+        SharePoolAccountSpaceArgs,
+    },
     utils::{create_account, realloc_account},
 };
 
@@ -32,6 +35,7 @@ pub fn create_pool_token_account<'a>(accounts: &'a [AccountInfo<'a>]) -> Program
     assert_non_empty("pool", ctx.accounts.pool)?;
     assert_program_owner("pool", ctx.accounts.pool, &crate::ID)?;
     assert_writable("pool", ctx.accounts.pool)?;
+    assert_account_key("pool", ctx.accounts.pool, Key::Pool)?;
 
     assert_non_empty("mint", ctx.accounts.mint)?;
     assert_owned_by_token_program_interface("mint", ctx.accounts.mint)?;
@@ -72,8 +76,9 @@ pub fn create_pool_token_account<'a>(accounts: &'a [AccountInfo<'a>]) -> Program
         ],
     )?;
 
-    let token_account_mint_pair = (*ctx.accounts.pool_token_account.key, *ctx.accounts.mint.key);
-    pool.pool_token_accounts.push(token_account_mint_pair);
+    let ata_mint_pair =
+        AtaMintPair::new(*ctx.accounts.pool_token_account.key, *ctx.accounts.mint.key);
+    pool.pool_token_accounts.push(ata_mint_pair);
     pool.save(ctx.accounts.pool)?;
 
     let new_pool_space = Pool::space(SharePoolAccountSpaceArgs::Pool {

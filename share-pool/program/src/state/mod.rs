@@ -1,5 +1,7 @@
+pub mod ata_mint_pair;
 pub mod pool;
 
+pub use ata_mint_pair::*;
 pub use pool::*;
 
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -14,18 +16,29 @@ use crate::error::SharePoolError;
 pub enum Key {
     Uninitialized,
     Pool,
+    Redemption,
 }
 
 #[derive(Clone, Debug)]
 pub enum SharePoolAccountSpaceArgs {
     /// Args needed for the pool account.
-    Pool { pool_nfts: usize, pool_token_accounts: usize },
+    Pool {
+        pool_nfts: usize,
+        pool_token_accounts: usize,
+    },
+    Redemption {
+        items: usize,
+    },
 }
 
 pub enum SharePoolAccountSeedsArgs<'a> {
     /// Seeds needed for the pool account.
     Pool {
         collection: &'a Pubkey,
+        authority: &'a Pubkey,
+    },
+    Redemption {
+        pool: &'a Pubkey,
         authority: &'a Pubkey,
     },
 }
@@ -54,7 +67,7 @@ pub trait SharePoolAccount: BorshSerialize + BorshDeserialize {
     fn seeds(args: SharePoolAccountSeedsArgs) -> Result<Vec<&[u8]>, SharePoolError>;
 
     /// Returns the PDA and bump seed for the account.
-    fn find_pda(args: SharePoolAccountSeedsArgs) -> Result<(Pubkey, u8), SharePoolError> {
+    fn pda(args: SharePoolAccountSeedsArgs) -> Result<(Pubkey, u8), SharePoolError> {
         Ok(Pubkey::find_program_address(
             &Self::seeds(args)?,
             &crate::ID,

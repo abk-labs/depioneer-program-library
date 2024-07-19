@@ -53,6 +53,9 @@ pub enum SharePoolError {
     /// 14 - Invalid mint key
     #[error("Invalid mint key")]
     InvalidMintKey,
+    /// 15 - Invalid redemption state
+    #[error("Invalid redemption state")]
+    InvalidRedemptionState,
 }
 
 impl PrintProgramError for SharePoolError {

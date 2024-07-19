@@ -1,9 +1,10 @@
+use mpl_token_metadata::accounts::Metadata;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, system_program};
 
 use crate::{
     assertions::{
-        assert_empty, assert_pda, assert_program_owner, assert_same_pubkeys, assert_signer,
-        assert_writable,
+        assert_empty, assert_non_empty, assert_pda, assert_program_owner, assert_same_pubkeys,
+        assert_signer, assert_writable,
     },
     instruction::{accounts::CreatePoolAccounts, create_pool::CreatePoolArgs},
     state::{Pool, SharePoolAccount, SharePoolAccountSeedsArgs, SharePoolAccountSpaceArgs},
@@ -26,6 +27,12 @@ pub fn create_pool<'a>(accounts: &'a [AccountInfo<'a>], args: CreatePoolArgs) ->
         ctx.accounts.collection_nft_mint,
         &spl_token::ID,
     )?;
+    assert_non_empty("collection_nft_mint", ctx.accounts.collection_nft_metadata)?;
+    assert_program_owner(
+        "collection_nft_metadata",
+        ctx.accounts.collection_nft_metadata,
+        &mpl_token_metadata::ID,
+    )?;
     assert_signer("authority", ctx.accounts.authority)?;
     assert_signer("payer", ctx.accounts.payer)?;
     assert_writable("payer", ctx.accounts.payer)?;
@@ -33,6 +40,11 @@ pub fn create_pool<'a>(accounts: &'a [AccountInfo<'a>], args: CreatePoolArgs) ->
         "system_program",
         ctx.accounts.system_program,
         &system_program::ID,
+    )?;
+    assert_same_pubkeys(
+        "collection_nft_mint",
+        ctx.accounts.collection_nft_metadata,
+        &Metadata::safe_deserialize(&ctx.accounts.collection_nft_metadata.data.borrow())?.mint,
     )?;
 
     let mut pool_seeds = pool_seeds;

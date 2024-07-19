@@ -13,7 +13,7 @@ pub struct CreatePool {
     /// Pool account to create (seeds: ['pool', collection_nft, authority])
     pub pool: solana_program::pubkey::Pubkey,
     /// Collection NFT Metadata account
-    pub collection_nft: solana_program::pubkey::Pubkey,
+    pub collection_nft_mint: solana_program::pubkey::Pubkey,
     /// Authority account
     pub authority: solana_program::pubkey::Pubkey,
     /// Payer account
@@ -40,7 +40,7 @@ impl CreatePool {
             self.pool, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.collection_nft,
+            self.collection_nft_mint,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -95,14 +95,14 @@ pub struct CreatePoolInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable]` pool
-///   1. `[]` collection_nft
+///   1. `[]` collection_nft_mint
 ///   2. `[signer]` authority
 ///   3. `[writable, signer]` payer
 ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct CreatePoolBuilder {
     pool: Option<solana_program::pubkey::Pubkey>,
-    collection_nft: Option<solana_program::pubkey::Pubkey>,
+    collection_nft_mint: Option<solana_program::pubkey::Pubkey>,
     authority: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -122,8 +122,11 @@ impl CreatePoolBuilder {
     }
     /// Collection NFT Metadata account
     #[inline(always)]
-    pub fn collection_nft(&mut self, collection_nft: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.collection_nft = Some(collection_nft);
+    pub fn collection_nft_mint(
+        &mut self,
+        collection_nft_mint: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.collection_nft_mint = Some(collection_nft_mint);
         self
     }
     /// Authority account
@@ -172,7 +175,9 @@ impl CreatePoolBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = CreatePool {
             pool: self.pool.expect("pool is not set"),
-            collection_nft: self.collection_nft.expect("collection_nft is not set"),
+            collection_nft_mint: self
+                .collection_nft_mint
+                .expect("collection_nft_mint is not set"),
             authority: self.authority.expect("authority is not set"),
             payer: self.payer.expect("payer is not set"),
             system_program: self
@@ -195,7 +200,7 @@ pub struct CreatePoolCpiAccounts<'a, 'b> {
     /// Pool account to create (seeds: ['pool', collection_nft, authority])
     pub pool: &'b solana_program::account_info::AccountInfo<'a>,
     /// Collection NFT Metadata account
-    pub collection_nft: &'b solana_program::account_info::AccountInfo<'a>,
+    pub collection_nft_mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authority account
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Payer account
@@ -211,7 +216,7 @@ pub struct CreatePoolCpi<'a, 'b> {
     /// Pool account to create (seeds: ['pool', collection_nft, authority])
     pub pool: &'b solana_program::account_info::AccountInfo<'a>,
     /// Collection NFT Metadata account
-    pub collection_nft: &'b solana_program::account_info::AccountInfo<'a>,
+    pub collection_nft_mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authority account
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Payer account
@@ -231,7 +236,7 @@ impl<'a, 'b> CreatePoolCpi<'a, 'b> {
         Self {
             __program: program,
             pool: accounts.pool,
-            collection_nft: accounts.collection_nft,
+            collection_nft_mint: accounts.collection_nft_mint,
             authority: accounts.authority,
             payer: accounts.payer,
             system_program: accounts.system_program,
@@ -277,7 +282,7 @@ impl<'a, 'b> CreatePoolCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.collection_nft.key,
+            *self.collection_nft_mint.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -311,7 +316,7 @@ impl<'a, 'b> CreatePoolCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.pool.clone());
-        account_infos.push(self.collection_nft.clone());
+        account_infos.push(self.collection_nft_mint.clone());
         account_infos.push(self.authority.clone());
         account_infos.push(self.payer.clone());
         account_infos.push(self.system_program.clone());
@@ -332,7 +337,7 @@ impl<'a, 'b> CreatePoolCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable]` pool
-///   1. `[]` collection_nft
+///   1. `[]` collection_nft_mint
 ///   2. `[signer]` authority
 ///   3. `[writable, signer]` payer
 ///   4. `[]` system_program
@@ -346,7 +351,7 @@ impl<'a, 'b> CreatePoolCpiBuilder<'a, 'b> {
         let instruction = Box::new(CreatePoolCpiBuilderInstruction {
             __program: program,
             pool: None,
-            collection_nft: None,
+            collection_nft_mint: None,
             authority: None,
             payer: None,
             system_program: None,
@@ -363,11 +368,11 @@ impl<'a, 'b> CreatePoolCpiBuilder<'a, 'b> {
     }
     /// Collection NFT Metadata account
     #[inline(always)]
-    pub fn collection_nft(
+    pub fn collection_nft_mint(
         &mut self,
-        collection_nft: &'b solana_program::account_info::AccountInfo<'a>,
+        collection_nft_mint: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.collection_nft = Some(collection_nft);
+        self.instruction.collection_nft_mint = Some(collection_nft_mint);
         self
     }
     /// Authority account
@@ -452,10 +457,10 @@ impl<'a, 'b> CreatePoolCpiBuilder<'a, 'b> {
 
             pool: self.instruction.pool.expect("pool is not set"),
 
-            collection_nft: self
+            collection_nft_mint: self
                 .instruction
-                .collection_nft
-                .expect("collection_nft is not set"),
+                .collection_nft_mint
+                .expect("collection_nft_mint is not set"),
 
             authority: self.instruction.authority.expect("authority is not set"),
 
@@ -478,7 +483,7 @@ impl<'a, 'b> CreatePoolCpiBuilder<'a, 'b> {
 struct CreatePoolCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     pool: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    collection_nft: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    collection_nft_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

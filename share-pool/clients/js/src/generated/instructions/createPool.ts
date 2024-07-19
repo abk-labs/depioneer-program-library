@@ -36,7 +36,7 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 export type CreatePoolInstruction<
   TProgram extends string = typeof SHARE_POOL_PROGRAM_ADDRESS,
   TAccountPool extends string | IAccountMeta<string> = string,
-  TAccountCollectionNft extends string | IAccountMeta<string> = string,
+  TAccountCollectionNftMint extends string | IAccountMeta<string> = string,
   TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
@@ -50,9 +50,9 @@ export type CreatePoolInstruction<
       TAccountPool extends string
         ? WritableAccount<TAccountPool>
         : TAccountPool,
-      TAccountCollectionNft extends string
-        ? ReadonlyAccount<TAccountCollectionNft>
-        : TAccountCollectionNft,
+      TAccountCollectionNftMint extends string
+        ? ReadonlyAccount<TAccountCollectionNftMint>
+        : TAccountCollectionNftMint,
       TAccountAuthority extends string
         ? ReadonlySignerAccount<TAccountAuthority> &
             IAccountSignerMeta<TAccountAuthority>
@@ -104,7 +104,7 @@ export function getCreatePoolInstructionDataCodec(): Codec<
 
 export type CreatePoolInput<
   TAccountPool extends string = string,
-  TAccountCollectionNft extends string = string,
+  TAccountCollectionNftMint extends string = string,
   TAccountAuthority extends string = string,
   TAccountPayer extends string = string,
   TAccountSystemProgram extends string = string,
@@ -112,7 +112,7 @@ export type CreatePoolInput<
   /** Pool account to create (seeds: ['pool', collection_nft, authority]) */
   pool: Address<TAccountPool>;
   /** Collection NFT Metadata account */
-  collectionNft: Address<TAccountCollectionNft>;
+  collectionNftMint: Address<TAccountCollectionNftMint>;
   /** Authority account */
   authority: TransactionSigner<TAccountAuthority>;
   /** Payer account */
@@ -124,14 +124,14 @@ export type CreatePoolInput<
 
 export function getCreatePoolInstruction<
   TAccountPool extends string,
-  TAccountCollectionNft extends string,
+  TAccountCollectionNftMint extends string,
   TAccountAuthority extends string,
   TAccountPayer extends string,
   TAccountSystemProgram extends string,
 >(
   input: CreatePoolInput<
     TAccountPool,
-    TAccountCollectionNft,
+    TAccountCollectionNftMint,
     TAccountAuthority,
     TAccountPayer,
     TAccountSystemProgram
@@ -139,7 +139,7 @@ export function getCreatePoolInstruction<
 ): CreatePoolInstruction<
   typeof SHARE_POOL_PROGRAM_ADDRESS,
   TAccountPool,
-  TAccountCollectionNft,
+  TAccountCollectionNftMint,
   TAccountAuthority,
   TAccountPayer,
   TAccountSystemProgram
@@ -150,7 +150,10 @@ export function getCreatePoolInstruction<
   // Original accounts.
   const originalAccounts = {
     pool: { value: input.pool ?? null, isWritable: true },
-    collectionNft: { value: input.collectionNft ?? null, isWritable: false },
+    collectionNftMint: {
+      value: input.collectionNftMint ?? null,
+      isWritable: false,
+    },
     authority: { value: input.authority ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -173,7 +176,7 @@ export function getCreatePoolInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.pool),
-      getAccountMeta(accounts.collectionNft),
+      getAccountMeta(accounts.collectionNftMint),
       getAccountMeta(accounts.authority),
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.systemProgram),
@@ -185,7 +188,7 @@ export function getCreatePoolInstruction<
   } as CreatePoolInstruction<
     typeof SHARE_POOL_PROGRAM_ADDRESS,
     TAccountPool,
-    TAccountCollectionNft,
+    TAccountCollectionNftMint,
     TAccountAuthority,
     TAccountPayer,
     TAccountSystemProgram
@@ -203,7 +206,7 @@ export type ParsedCreatePoolInstruction<
     /** Pool account to create (seeds: ['pool', collection_nft, authority]) */
     pool: TAccountMetas[0];
     /** Collection NFT Metadata account */
-    collectionNft: TAccountMetas[1];
+    collectionNftMint: TAccountMetas[1];
     /** Authority account */
     authority: TAccountMetas[2];
     /** Payer account */
@@ -236,7 +239,7 @@ export function parseCreatePoolInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       pool: getNextAccount(),
-      collectionNft: getNextAccount(),
+      collectionNftMint: getNextAccount(),
       authority: getNextAccount(),
       payer: getNextAccount(),
       systemProgram: getNextAccount(),

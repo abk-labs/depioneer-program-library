@@ -77,7 +77,7 @@ async fn create_pool() {
     let ix = CreatePoolBuilder::new()
         .authority(context.payer.pubkey())
         .payer(context.payer.pubkey())
-        .collection_nft(collection_nft_mint.pubkey())
+        .collection_nft_mint(collection_nft_mint.pubkey())
         .pool(pool_address)
         .shares_per_token(1)
         .instruction();
